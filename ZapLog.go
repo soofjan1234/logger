@@ -116,7 +116,6 @@ func HttpLogger() gin.HandlerFunc {
 				"IP: %s",
 			requestId, handlerName, httpPath, method, reqParams, clientIP,
 		)
-		SugarLogger.Info(requestLog)
 
 		// 设置响应记录器
 		recorder := NewResponseRecorder(c.Writer)
@@ -154,6 +153,6 @@ func HttpLogger() gin.HandlerFunc {
 				"---------------------------请求结束-----------------------------",
 			requestId, statusCode, errorMessage, responseData, recorder.Body.Len(), cost,
 		)
-		SugarLogger.Info(responseLog)
+		SugarLogger.Infof("%s\n%s", requestLog, responseLog)
 	}
 }
