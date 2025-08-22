@@ -97,7 +97,12 @@ func HttpLogger() gin.HandlerFunc {
 		case "application/octet-stream":
 			reqParams = "[BINARY DATA]"
 		default:
-			reqParams = fmt.Sprintf("[UNSUPPORTED CONTENT TYPE: %s]", c.ContentType())
+			// 处理 GET 请求的 query 参数
+			if c.Request.Method == "GET" && len(c.Request.URL.Query()) > 0 {
+				reqParams = c.Request.URL.Query()
+			} else {
+				reqParams = fmt.Sprintf("[UNSUPPORTED CONTENT TYPE: %s]", c.ContentType())
+			}
 		}
 
 		// 记录请求日志
