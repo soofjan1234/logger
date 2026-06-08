@@ -5,12 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"io"
 	"os"
-	"path"
 	"reflect"
 	"runtime"
 	"strings"
@@ -19,30 +17,11 @@ import (
 
 var SugarLogger *zap.SugaredLogger
 
-func InitLogger(filename string, maxSize, maxBackups, maxAge int, compress bool) {
-	// 确保目录存在且具有正确的权限
-	if err := ensureDir(filename); err != nil {
-		SugarLogger.Errorf("日志文件创建失败: %v", err)
-	}
-
-	writeSyncer := getLogWriter(filename, maxSize, maxBackups, maxAge, compress)
-	consoleWriteSyncer := zapcore.AddSync(os.Stdout)
+func InitLogger() {
 	encoder := getEncoder()
-	// 创建分级写入器（Tee），日志将同时写入文件和控制台
-	core := zapcore.NewTee(
-		zapcore.NewCore(encoder, writeSyncer, zapcore.DebugLevel),
-		zapcore.NewCore(encoder, consoleWriteSyncer, zapcore.DebugLevel),
-	)
+	core := zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), zapcore.DebugLevel)
 	logger := zap.New(core, zap.AddCaller())
 	SugarLogger = logger.Sugar()
-}
-
-func ensureDir(filePath string) error {
-	dir := path.Dir(filePath)
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		return os.MkdirAll(dir, 0755)
-	}
-	return nil
 }
 
 func getEncoder() zapcore.Encoder {
@@ -50,18 +29,6 @@ func getEncoder() zapcore.Encoder {
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 	return zapcore.NewConsoleEncoder(encoderConfig)
-}
-
-func getLogWriter(filename string, maxSize, maxBackups, maxAge int, compress bool) zapcore.WriteSyncer {
-	lumberJackLogger := &lumberjack.Logger{
-		Filename:   filename,   //文件路径
-		MaxSize:    maxSize,    //日志文件的最大存储量（单位MB），否则切割
-		MaxBackups: maxBackups, //最多保留的文件数量
-		MaxAge:     maxAge,     //旧文件最多保存的天数
-		Compress:   compress,   //是否压缩
-	}
-
-	return zapcore.AddSync(lumberJackLogger)
 }
 
 // HttpLogger 请求日志切面
