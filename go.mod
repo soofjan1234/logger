@@ -1,4 +1,4 @@
-module logger
+module github.com/soofjan1234/logger
 
 go 1.24.3
 
